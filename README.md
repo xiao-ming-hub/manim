@@ -2,7 +2,7 @@
 ## 介绍
 Manim视频源代码
 
-B站账号[HelloWorldXi](https://space.bilibili.com/517182576)
+[B站账号](https://space.bilibili.com/517182576)
 ## manim安装思路
 大概就是装好依赖，然后安装，完事
 

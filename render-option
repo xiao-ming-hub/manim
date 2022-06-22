@@ -1,0 +1,2 @@
+#! /bin/sh
+echo manimgl -w --hd --show_animation_progress --leave_progress_bars

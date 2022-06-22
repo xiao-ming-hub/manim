@@ -66,3 +66,27 @@ class LaggedStartTest(Scene):
         ).arrange()
         self.play(LaggedStart(*[FadeIn(m, shift = UP * 0.5, rate_function = exponential_decay) for m in mob], lag_ratio = 0.1))
 
+# utls form https://github.com/manim-kindergarten/manim_sandbox
+class AllPointsIndex(VGroup):
+    CONFIG = {
+        "scale_factor": 0.5,
+        "color": PURPLE,
+    }
+
+    def __init__(self, obj, **kwargs):
+        # digest_config(self, kwargs)
+        VGroup.__init__(self, **kwargs)
+        for index, points in enumerate(obj.get_all_points()):
+            point_id = Integer(index, background_stroke_width=2) \
+                .scale(self.scale_factor).set_color(self.color)
+            point_id.move_to(points)
+            self.add(point_id)
+
+class UtlsTest(Scene):
+    def construct(self):
+        # mob = Tex('x_{1, 2} = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}')
+        # mob = Rectangle(fill_color = BLUE, fill_opacity = 1)
+        mob = Circle(fill_color = RED, fill_opacity = 1, stroke_color = WHITE)
+        self.add(mob)
+        self.play(Write(AllPointsIndex(mob), run_time = 10, lag_ratio = 2))
+

@@ -6,9 +6,9 @@ class GouGu(Scene):
         tex_color = {'{a}' : TEAL_B, '{b}' : GREEN_B, '{c}' : BLUE_B}
         tex_isolate = ['{a}', '{b}', '{c}']
 
-        t = np.array((rt['width'] / 2, -rt['height'] / 2, 0))
+        ct = np.array((rt['width'] / 2, -rt['height'] / 2, 0))
         t = Polygon(
-            t, t + UP * rt['height'], t + LEFT * rt['width'],
+            ct, ct + UP * rt['height'], ct + LEFT * rt['width'],
             stroke_color = PURPLE_E
         )
         self.wait()
@@ -36,11 +36,12 @@ class GouGu(Scene):
         )
 
         tg = VGroup(*[t.copy().rotate(PI / 2 * i, about_point = sc.get_center()) for i in range(1, 4)])
+        fmt = Tex('{a}^2', '+', '{b}^2', '=', '{c}^2', tex_to_color_map = tex_color).scale(1.5).to_edge(DOWN, buff = 1.5).shift(frame.get_center())
         sc.add_updater(lambda m : self.add(m))
         self.wait()
         self.play(*[Write(mob) for mob in tg])
         sc.clear_updaters()
-        self.play(Uncreate(sc), FadeOut(fc))
+        self.play(Uncreate(sc), ReplacementTransform(fc, fmt[6 :]))
 
         sa = Square(
             side_length = rt['width'],
@@ -59,8 +60,23 @@ class GouGu(Scene):
             *[Write(mob) for mob in [fa, fb]]
         )
 
-        fmt = Tex('{a}^2', '+', '{b}^2', '=', '{c}^2', tex_to_color_map = tex_color).scale(1.5).to_edge(DOWN, buff = 1.5).shift(frame.get_center())
         self.play(*[ReplacementTransform(x, y) for x, y in ((fa, fmt[0 : 2]), (fb, fmt[3 : 5]))])
+        self.wait()
+        self.play(*[FadeIn(fmt[x]) for x in [2, 5]])
+        self.wait()
+
+        self.play(*[FadeOut(mob) for mob in [tg, sa, sb, t]])
+        ct = (ct, ct + UP * rt['height'], ct + LEFT * rt['width'])
+        t.become(VGroup(
+            *[Line(ct[i - 1], ct[i], color = tex_color[c]) for i, c in (
+                (0, '{a}'), (1, '{b}'), (2, '{c}')
+            )]
+        ))
+        fmt.shift(DOWN - frame.get_center())
+        frame.move_to(ORIGIN)
+        squ = Square(0.1).move_to(ct[0])
+        self.play(Write(t))
+        self.play(*[FadeIn(mob, shift = DOWN) for mob in [a, b, c]])
         self.embed()
 
 class Test(Scene):

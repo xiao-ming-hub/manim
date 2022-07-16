@@ -6,8 +6,10 @@ class RandomMove(Scene):
         face = 0                # 0 right, 1 up, 2 left, 3 down
         center = ORIGIN
         mob = Dot(radius = 0.02, fill_color = ORANGE)
-        path = TracedPath(mob.get_center, stroke_width = 3, stroke_color = TEAL, stroke_opacity = 0.3)
-        self.add(path, mob)
+        random.seed(time.time())
+        # path = TracedPath(mob.get_center, stroke_width = 3, stroke_color = TEAL, stroke_opacity = 0.3)
+        path = TracingTail(mob.get_center, stroke_color = TEAL, time_traced = 1000.)
+        self.add(mob, path)
         while True:
             while True:
                 nface = (face + random.randint(3, 5)) % 4
@@ -16,5 +18,6 @@ class RandomMove(Scene):
                     face = nface
                     center = x
                     break
-            mob.move_to(center)
-            self.wait(0.2)
+            # mob.move_to(center)
+            self.play(mob.animate.move_to(center))
+            # self.wait(0.2)

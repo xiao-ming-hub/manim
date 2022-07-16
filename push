@@ -1,0 +1,5 @@
+#! /bin/sh
+echo ----------------gitee.com----------------
+git push ee HEAD 
+echo ----------------github.com---------------
+git push hub HEAD

@@ -1,6 +1,4 @@
 # [ManimGL 源码解读] Tex 如何渲染公式
-这个专栏不是 manim 入门，需要有一些 Python 和 ManimGL 基础。manim 入门建议看：<https://docs.manim.org.cn>。
-
 `Tex` 能根据传入的 `tex_strings` 渲染公式，根据 `tex_to_color_map` 设置颜色，根据 `tex_strings`、`isolate` 和 `tex_to_color_map` 拆出 `submobjects`（比如用于 `TransformMatchingTex` ~~`TransformMatchingShapes` 不香吗~~）。
 ```py
 # manimlib.mobject.svg.tex_mobject.Tex
@@ -20,7 +18,7 @@ class Tex(SingleStringTex):
     
     ...
 ```
-`digest_config` 处理参数，接着调用了 `break_up_tex_strings` 方法。这个方法能将 `tex_strings` 进一步按照 `self.isolate` 和 `self.tex_to_color_map` 拆分。
+`digest_config` 处理参数，接着调用 `break_up_tex_strings` 将 `tex_strings` 进一步按照 `self.isolate` 和 `self.tex_to_color_map` 拆分。
 ```py
 # manimlib.mobject.svg.tex_mobject.Tex.break_up_tex_strings
 def break_up_tex_strings(self, tex_strings: Iterable[str]) -> Iterable[str]:
@@ -42,7 +40,7 @@ def break_up_tex_strings(self, tex_strings: Iterable[str]) -> Iterable[str]:
             pieces.append(s)
     return list(filter(lambda s: s, pieces))
 ```
-`self.tex_strings` 被拼在一起（中间用 `self.arg_separator` 连接，通常是`""`），存在 `full_string` 里。调用 `SingleStringTex` 生成 SVG。调用 `self.break_up_by_substrings`。这个函数大概是，根据 `self.tex_strings` 再分别调用 `SingleStringTex` 渲染 SVG 得到 `sub_tex_mob`，把它设置为自己的 `submobjects`。
+`self.tex_strings` 被拼在一起（中间用 `self.arg_separator` 连接，通常是 `""`），存在 `full_string` 里。调用 `SingleStringTex` 生成 SVG。调用 `self.break_up_by_substrings`。这个函数大概是，根据 `self.tex_strings` 再分别调用 `SingleStringTex` 渲染 SVG 得到 `sub_tex_mob`，把它设置为自己的 `submobjects`。
 ```py
 # manimlib.mobject.svg.tex_mobject.Tex.break_up_by_substrings
 def break_up_by_substrings(self):
@@ -86,12 +84,14 @@ def set_color_by_tex_to_color_map(
         self.set_color_by_tex(tex, color, **kwargs)
     return self
 ```
+`set_color_by_tex` 能对单个 `tex` 字符串上色。
 ```py
 # manimlib.mobject.svg.tex_mobject.Tex.set_color_by_tex
 def set_color_by_tex(self, tex: str, color: ManimColor, **kwargs):
     self.get_parts_by_tex(tex, **kwargs).set_color(color)
     return self
 ```
+`get_parts_by_tex` 查找 `tex` 对应的部分，包装成 `VGroup` 返回。
 ```py
 # manimlib.mobject.svg.tex_mobject.Tex.get_parts_by_tex
 def get_parts_by_tex(
@@ -110,4 +110,4 @@ def get_parts_by_tex(
         self.submobjects
     ))
 ```
-若 `self.organize_left_to_right`，调用 `self.organize_submobjects_left_to_right` 把 `self.submobjects` 按横坐标排序（只是下标改变，`get_center` 不变）。
+若 `self.organize_left_to_right`，调用 `self.organize_submobjects_left_to_right` 把 `self.submobjects` 按横坐标排序（只是下标改变，位置不变）。

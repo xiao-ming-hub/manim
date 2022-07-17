@@ -1,9 +1,5 @@
 # [ManimGL 源码解读] SingleStringTex 如何渲染公式
-这个专栏不是 manim 入门，需要有一些 Python 和 ManimGL 基础。manim 入门建议看：<https://docs.manim.org.cn>。
-
-这是我自己对代码的理解，基本上没有参考文档。机器运行的是代码，而不是文档。所以无论描述有什么歧义都以代码为主。这些代码是 ManimGL v1.6.1的代码。
-
-和 `Tex` 一样，定义在 `manimlib/mobject/svg/tex_mobject.py`。传入单个字符串 `tex_string` 渲染出 `SVGMobject`。
+`SingleStringTex` 传入单个字符串 `tex_string` 渲染出 `SVGMobject`。
 ```py
 # manimlib.mobject.svg.tex_mobject.SingleStringTex
 class SingleStringTex(SVGMobject):
@@ -44,20 +40,7 @@ def init_svg_mobject(self) -> None:
     self.generate_mobject()
     SVG_HASH_TO_MOB_MAP[hash_val] = self.copy()
 ```
-`SingleStringTex` 重写了 `SVGMobject.hash_seed`（获取散列种子方法）。去掉 `file_name`（因为是 `None`），添加 `tex_string`（传入的 LaTeX 字符串）、`alignment`（对齐方式，默认 `\centering`）、`math_mode`（是否开启数学环境，默认 `True`）。
-```py
-# manimlib.mobject.svg.svg_mobject.SVGMobject.hash_seed
-@property
-def hash_seed(self) -> tuple:
-    # Returns data which can uniquely represent the result of `init_points`.
-    # The hashed value of it is stored as a key in `SVG_HASH_TO_MOB_MAP`.
-    return (
-        self.__class__.__name__,
-        self.svg_default,
-        self.path_string_config,
-        self.file_name
-    )
-```
+`SingleStringTex` 重写了 `SVGMobject.hash_seed`（获取散列种子方法）。
 ```py
 # manimlib.mobject.svg.tex_mobject.SingleStringTex.hash_seed
 @property
@@ -69,6 +52,20 @@ def hash_seed(self) -> tuple:
         self.tex_string,
         self.alignment,
         self.math_mode
+    )
+```
+与父类相比，`SingleStringTex.hash_seed` 去掉 `file_name`（因为是 `None`），添加 `tex_string`（传入的 LaTeX 字符串）、`alignment`（对齐方式，默认 `"\centering"`）、`math_mode`（是否开启数学环境，默认 `True`）（为什么要这样做？）。
+```py
+# manimlib.mobject.svg.svg_mobject.SVGMobject.hash_seed
+@property
+def hash_seed(self) -> tuple:
+    # Returns data which can uniquely represent the result of `init_points`.
+    # The hashed value of it is stored as a key in `SVG_HASH_TO_MOB_MAP`.
+    return (
+        self.__class__.__name__,
+        self.svg_default,
+        self.path_string_config,
+        self.file_name
     )
 ```
 `SVG_HASH_TO_MOB_MAP` 是一个存储 `VMobject` 的散列值的字典。
@@ -95,7 +92,7 @@ def generate_mobject(self) -> None:
     self.add(*mobjects)
     self.flip(RIGHT)  # Flip y
 ```
-`SingleStringTex` 重写了 `get_file_path` 方法。它会根据一开始提供的 `tex_string` 渲染 SVG 文件，给出提示信息，返回文件名。
+`SingleStringTex` 重写了 `get_file_path` 方法。它会根据一开始提供的 `tex_string` 渲染 SVG 文件，返回文件名。`display_during_execution` 给出提示信息。
 ```py
 # manimlib.mobject.svg.tex_mobject.SingleStringTex.get_file_path
 def get_file_path(self) -> str:
@@ -104,7 +101,7 @@ def get_file_path(self) -> str:
         file_path = tex_to_svg_file(full_tex)
     return file_path
 ```
-`display_during_execution` 位置源代码头的 `from ... import ...` 语句，输出提示信息。`get_tex_file_body` 获得最终写入 `.tex` 的字符串。
+`get_tex_file_body` 获得最终写入 `.tex` 的字符串。
 ```py
 # manimlib.mobject.svg.tex_mobject.SingleStringTex.get_tex_file_body
 def get_tex_file_body(self, tex_string: str) -> str:
@@ -126,7 +123,7 @@ def get_tex_file_body(self, tex_string: str) -> str:
 def get_modified_expression(self, tex_string: str) -> str:
     return self.modify_special_strings(tex_string.strip())
 ```
-`modify_special_strings` 特殊处理 `tex_string` （这两个函数看得我吐血，`get_modified_expression` 里面就直接 `return` 掉了，~~差不多~~就是起了个别名。而且它还会对一个字符串 `strip` 两次⋯⋯我很难理解这样做的用意）。
+`modify_special_strings` 特殊处理 `tex_string` （这两个函数直接把我整蒙了，`get_modified_expression` 里面就直接 `return` 掉，~~差不多~~就是起了个别名。而且它还会对一个字符串 `strip` 两次⋯⋯我很难理解这样做的用意）。
 ```py
 # manimlib.mobject.svg.tex_mobject.SingleStringTex.modify_special_strings
     def modify_special_strings(self, tex: str) -> str:
@@ -193,7 +190,7 @@ def get_modified_expression(self, tex_string: str) -> str:
                 tex = ""
         return tex
 ```
-`tex_to_svg_file` 读取 `.tex` 文件位置，根据 `tex_file_content` 计算散列值构造文件名（`svg_file`）。如果没有渲染过，则写入`.tex` 文件并渲染它。这一步非常妙，相同内容的 `tex_file_content` 不会重新渲染。
+`tex_to_svg_file` 读取 `.tex` 文件位置，根据 `tex_file_content` 计算散列值构造文件名（`svg_file`）。如果没有渲染过，则写入 `.tex` 文件并渲染它。
 ```py
 # manimlib.utils.tex_file_writing.tex_to_svg_file
 def tex_to_svg_file(tex_file_content: str) -> str:
@@ -223,7 +220,7 @@ def get_temp_dir() -> str:
 def get_directories() -> dict[str, str]:
     return get_customization()["directories"]
 ```
-`CUSTOMIZATION` 一开始是空字典，第一次调用后就会把 `default_config.yml` 和 `custom_config.yml`（若存在）转换成字典。可以看出，这里有对 `temporary_storage` 特判，若它是空字符串 `""`，则把它设置为操作系统的默认临时文件存放位置（`tempfile.gettempdir()`）。
+`CUSTOMIZATION` 一开始是空字典，第一次调用后就会把 `default_config.yml` 和 `custom_config.yml`（若存在）转换成字典。可以看出，这里有对 `temporary_storage` 特判：若它是空字符串 `""`，则把它设置为操作系统的默认临时文件存放位置（`tempfile.gettempdir()`）。
 ```py
 # manimlib.utils.customization.get_customization
 def get_customization():
@@ -249,7 +246,9 @@ def guarantee_existence(path: str) -> str:
         os.makedirs(path)
     return os.path.abspath(path)
 ```
-现在我们终于弄清 ManimGL 如何获取 `.tex` 的文件名的细节了。这时文件名保存在 `tex_to_svg_file` 变量里，最终返回的也是这个变量。接下来我们来看看 ManimGL 怎么调用 LaTeX，又是怎么生成最终的 SVG 文件。
+`tex_hash` 根据 `tex_content` 生成对应散列值，这是用于判断两个 `SingleStringTex` 是否相等的方法。回想前面的 `SingleStringTex.hash_seed`，增加的内容正好共同决定了 `tex_content`。其实现在你还可以再看看 `SVGMobject.init_svg_mobject`，相同的不仅不会重复渲染，也不会重复执行 `generate_mobject`。
+
+现在我们终于弄清 ManimGL 如何生成 `.tex` 的文件名的细节了。这时文件名保存在 `tex_to_svg_file` 变量里，最终返回的也是这个变量。接下来我们来看看 ManimGL 怎么调用 LaTeX，怎么生成最终的 SVG 文件。
 
 `tex_to_svg` 把传入的 `tex_file_content` 渲染成 SVG，写入传入的 `svg_file`，返回 `svg_file`。可以看到，`svg_file` 的后缀转换成 `.svg`，保存在 `tex_file`。接着打开文件，把 `tex_file_content` 写入 `tex_file`，开始渲染（如果以前渲染过的话就不会调用 `tex_to_svg`）。渲染完成后，把除了 `.svg` 的文件删除。
 ```py

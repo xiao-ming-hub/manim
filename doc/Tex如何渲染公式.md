@@ -3,7 +3,7 @@
 ```py
 # manimlib.mobject.svg.tex_mobject.Tex
 class Tex(SingleStringTex):
-    CONFIG = {...}a
+    CONFIG = {...}
 
     def __init__(self, *tex_strings: str, **kwargs):
         digest_config(self, kwargs)
